@@ -3,7 +3,8 @@ import random
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from scipy import stats
+from scipy.stats import spearmanr
+from scipy.stats import ttest_ind
 
 df = pd.read_csv('Данные по использованию климатических систем (1).csv', delimiter=';', skipinitialspace=True, decimal=',')
 df.columns = df.columns.str.replace(' ', '_')
@@ -174,9 +175,9 @@ plt.show()
 # Влияет ли способ охлаждения на оценку комфорта?
 cond = df[df['способ_охлаждения_без_смешанного'] == 'Кондиционирование']['оценка_комфорта']
 vent = df[df['способ_охлаждения_без_смешанного'] == 'Вентиляция']['оценка_комфорта']
-v_c = stats.ttest_ind(cond, vent)
+v_c = ttest_ind(cond, vent)
 print(v_c.pvalue, "p уровень для способа охлаждения и оценку комфорта")
 # Влияет ли степень утепления на оценку комфорта?
-tep_comf = stats.spearmanr(df['утепление'], df['оценка_комфорта'])
+tep_comf = spearmanr(df['утепление'], df['оценка_комфорта'])
 print(tep_comf.pvalue, "p уровень для утепления и оценку комфорта")
 print(tep_comf.statistic, "корреляция между утеплением и оценкой комфорта")
