@@ -252,3 +252,15 @@ score = model.score(x, y)
 inc = model.intercept_
 cof = model.coef_
 print(score, inc, cof)
+
+#Влияет ли возрастная группа на оценку комфорта
+from scipy.stats import shapiro
+#проверка на нормальность (возраст)
+print(round(shapiro(df['возраст'])[1], 2))
+#проверка на нормальность (оценка_комфорта)
+print(round(shapiro(df['оценка_комфорта'])[1], 2))
+#sns.displot(df['оценка_комфорта'], kind='kde') 
+print('влияние возрастной группы на оценку комфорта:')
+print(spearmanr(df['возраст'], df['оценка_комфорта']))
+#получаем то что p-уровень +- = 0
+#следовательно какая либо корреляция отсутствует
