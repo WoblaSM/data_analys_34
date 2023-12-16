@@ -7,8 +7,12 @@ from scipy.stats import spearmanr
 from scipy.stats import ttest_ind
 from scipy.stats import mannwhitneyu
 from scipy.stats import pearsonr
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.linear_model import LinearRegression
+import numpy as np
 
-df = pd.read_csv('Данные по использованию климатических систем (1).csv', delimiter=';', skipinitialspace=True, decimal=',')
+df = pd.read_csv('Данные по использованию климатических систем.csv', delimiter=';', skipinitialspace=True, decimal=',')
 df.columns = df.columns.str.replace(' ', '_')
 df.columns = df.columns.str.lower()
 df['возраст'] = df['возраст'].astype(float)
@@ -66,11 +70,14 @@ df['температура_воздуха_на_улице'] = df['темпера
 # df['возраст'] = df['возраст'].fillna('unknown')
 a = df.groupby(['пол', 'город'])['возраст'].transform(lambda x: pd.Series.median(x))
 a = a.replace('unknown', None)
+
 # Заполним оставшиеся пропуски общей медианой
 b = df['возраст'].median()
 a = a.fillna(b)
 df['возраст'] = df['возраст'].fillna(a)
 # Не будем заполнять пропуски ощущение_движения_воздуха_(bool) так  далее эти данные не используются
+df[['вентилятор', 'окно', 'отопление']] = df[['вентилятор', 'окно', 'отопление']].fillna('3')
+print(df[['вентилятор', 'окно', 'отопление']])
 # Заполним данные оценка_комфорта методом интерполюции по группам
 a = df.groupby(['способ_охлаждения', 'режим_при_смешанном_типе_охлаждения', 'способ_обогрева', 'климат'])['оценка_комфорта'].apply(lambda group: group.interpolate())
 a = a.reset_index()
@@ -202,7 +209,7 @@ print(indoor_temp)
 
 #влияние температуры на улице на оценку кофморта
 df1 = df.dropna(subset='температура_воздуха_на_улице')
-outdoor_temp  = pearsonr(df1['температура_воздуха_на_улице'], df1['ПРОВЕРКАоценка_комфорта'])
+outdoor_temp  = pearsonr(df1['температура_воздуха_на_улице'], df1['оценка_комфорта'])
 print('влияние температуры на улице на оценку кофморта:')
 print(outdoor_temp)
 #тк по итогу p-уровень менее 0.05,
@@ -225,3 +232,23 @@ a = df.groupby('страна')['оценка_комфорта']
 for k, i in a:
   print(f'{k} - {i.mean()}')
 # средние оценки в странах различаются
+# Регрессионная модель
+df['способ_охлаждения'] = df['способ_охлаждения'].astype('category')
+df['способ_охлажденияb'] = df['способ_охлаждения'].cat.codes
+df['способ_обогрева'] = df['способ_обогрева'].astype('category')
+df['способ_обогреваb'] = df['способ_обогрева'].cat.codes
+# enc = OneHotEncoder()
+# enc_data = pd.DataFrame(enc.fit_transform(
+#     df[['способ_охлажденияb', 'способ_обогреваb']]).toarray())
+# New_df = df.join(enc_data)
+# print(New_df)
+x = df[['способ_охлажденияb', 'вентилятор', 'окно', 'отопление', 'способ_обогреваb']][:463]
+y = df['температура_воздуха_в_помещении'].dropna()
+# X_train, X_test, y_train, y_test = train_test_split(
+#     x, y, test_size=0.15, random_state=42)
+model = LinearRegression()
+model = model.fit(x, y)
+score = model.score(x, y)
+inc = model.intercept_
+cof = model.coef_
+print(score, inc, cof)
